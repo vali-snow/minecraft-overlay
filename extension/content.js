@@ -6,16 +6,6 @@ if (!window.minesweeperHelperState) {
   };
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "activate") {
-    activateOverlay();
-  }
-
-  if (message.action === "deactivate") {
-    clearCells();
-  }
-});
-
 function getState() {
 	return window.minesweeperHelperState;
 }
@@ -123,9 +113,7 @@ function getBoardMatrix() {
   return matrix;
 }
 
-function getSafeCells(matrix) {
-  const safeCells = [];
-
+function markOverlayCells(matrix) {
   const height = matrix.length;
   const width = matrix[0].length;
 
@@ -222,7 +210,7 @@ function markSafeCells(safeCells) {
     const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
 
     if (!cell) continue;
-	if (cell.querySelector(".safe-overlay")) continue;
+	  if (cell.querySelector(".safe-overlay")) continue;
 
     const overlay = document.createElement("div");
     overlay.className = "safe-overlay";
