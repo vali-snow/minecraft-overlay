@@ -4,17 +4,19 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
   {
-    files: ["**/*.{js,mjs,cjs}"],
+    files: ["extension/**/*.{js,mjs,cjs}"],
     plugins: { js },
     extends: ["js/recommended"],
     languageOptions:
     {
-      globals: globals.browser,
-      chrome: "readonly",
+      globals: {
+        ...globals.browser,
+        chrome: "readonly"
+      }
     }
   },
   {
-    files: ["**/*.js"],
+    files: ["extension/**/*.js"],
     languageOptions:
     {
       sourceType: "script"

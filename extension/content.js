@@ -1,7 +1,7 @@
 if (!window.minesweeperHelperState) {
   window.minesweeperHelperState = {
     refreshHandler: null,
-	intervalId: null,
+	  intervalId: null,
     active: false
   };
 }
@@ -113,7 +113,9 @@ function getBoardMatrix() {
   return matrix;
 }
 
-function markOverlayCells(matrix) {
+function getSafeCells(matrix) {
+  const safeCells = [];
+  
   const height = matrix.length;
   const width = matrix[0].length;
 
