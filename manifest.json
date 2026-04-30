@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Minesweeper Overlay",
+  "version": "1.0",
+  "description": "Adds an overlay above the Minesweeper board",
+  "permissions": ["scripting"],
+  "host_permissions": [
+    "https://minesweeper-multiplayer.dk/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://minesweeper-multiplayer.dk/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
