@@ -1,7 +1,7 @@
 if (!window.minesweeperHelperState) {
   window.minesweeperHelperState = {
     refreshHandler: null,
-	  intervalId: null,
+    intervalId: null,
     active: false
   };
 }
@@ -70,13 +70,14 @@ function refreshOverlays() {
   clearCells();
   
   const matrix = getBoardMatrix();
-  const safeCells = getSafeCells(matrix);
-  markSafeCells(safeCells);
-  
-  const bombCells = getBombCells(matrix);
-  markBombCells(bombCells);
-  
-  console.log('overlay reset');
+
+  let changes;
+  do {
+    changes = processMatrix(matrix);
+  }
+  while( changes > 0);
+
+  createOverlay(matrix);
 }
 
 function getBoardMatrix() {
@@ -113,9 +114,9 @@ function getBoardMatrix() {
   return matrix;
 }
 
-function getSafeCells(matrix) {
-  const safeCells = [];
-  
+function processMatrix(matrix) {
+  let count = 0;
+
   const height = matrix.length;
   const width = matrix[0].length;
 
@@ -123,54 +124,33 @@ function getSafeCells(matrix) {
     for (let x = 0; x < width; x++) {
       const value = matrix[y][x];
 
-      if (typeof value !== "number" || value === 0) {
+      if (value === 0 || value === "bomb" || value === "safe" || typeof value !== "number") {
         continue;
       }
 
       const neighbors = getNeighbors(x, y, height, width, matrix);
 
-      const knownBombs = neighbors.filter(n => n.value === "*");
+      const knownBombs = neighbors.filter(n => n.value === "*" || n.value === "bomb");
+      const remainingBombs = value - knownBombs.length;
       const unknowns = neighbors.filter(n => n.value === undefined);
 
       if (knownBombs.length === value) {
         for (const cell of unknowns) {
-          safeCells.push({ x: cell.x, y: cell.y });
+          matrix[cell.y][cell.x] = "safe";
+          count++;
         }
       }
-    }
-  }
-
-  return removeDuplicateCells(safeCells);
-}
-
-function getBombCells(matrix) {
-  const bombCells = [];
-
-  const height = matrix.length;
-  const width = matrix[0].length;
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const value = matrix[y][x];
-
-      if (typeof value !== "number" || value === 0) continue;
-
-      const neighbors = getNeighbors(x, y, height, width, matrix);
-
-      const knownBombs = neighbors.filter(n => n.value === "*");
-      const unknowns = neighbors.filter(n => n.value === undefined);
-
-      const remainingBombs = value - knownBombs.length;
 
       if (remainingBombs > 0 && remainingBombs === unknowns.length) {
         for (const cell of unknowns) {
-          bombCells.push({ x: cell.x, y: cell.y });
+          matrix[cell.y][cell.x] = "bomb";
+          count++;
         }
       }
     }
   }
 
-  return removeDuplicateCells(bombCells);
+  return count;
 }
 
 function getNeighbors(x, y, height, width, matrix) {
@@ -192,74 +172,56 @@ function getNeighbors(x, y, height, width, matrix) {
     return neighbors;
 }
 
-function removeDuplicateCells(cells) {
-  const seen = new Set();
+function createOverlay(matrix) {
+  const height = matrix.length;
+  const width = matrix[0].length;
 
-  return cells.filter(cell => {
-    const key = `${cell.x},${cell.y}`;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      var value = matrix[y][x];
 
-    if (seen.has(key)) {
-      return false;
+      if(value !== "safe" && value !== "bomb") continue;
+
+      const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+
+      if (!cell) continue;
+      if (cell.querySelector(".safe-overlay")) continue;
+
+      const overlay = document.createElement("div");
+      overlay.className = `${value}-overlay`;
+
+      Object.assign(overlay.style, overlayTemplate(value));
+
+      cell.style.position = "relative";
+      cell.appendChild(overlay);
     }
-
-    seen.add(key);
-    return true;
-  });
+  };
 }
 
-function markSafeCells(safeCells) {
-  for (const { x, y } of safeCells) {
-    const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+function overlayTemplate(value) {
+  let backgroundColor;
 
-    if (!cell) continue;
-	  if (cell.querySelector(".safe-overlay")) continue;
-
-    const overlay = document.createElement("div");
-    overlay.className = "safe-overlay";
-
-    Object.assign(overlay.style, {
-      position: "absolute",
-      top: "2px",
-      left: "2px",
-      right: "3px",
-      bottom: "3px",
-      background: "rgba(0, 255, 0, 0.25)",
-      pointerEvents: "none",
-      zIndex: "10"
-    });
-
-    cell.style.position = "relative";
-
-    cell.appendChild(overlay);
+  switch (value) {
+    case "safe":
+      backgroundColor = "rgba(0, 255, 0, 0.25)";
+      break;
+    case "bomb":
+      backgroundColor = "rgba(255, 0, 0, 0.25)";
+      break;
+    default:
+      backgroundColor = "rgba(0, 0, 0, 0)";
+      break;
   }
-}
 
-
-
-function markBombCells(bombCells) {
-  for (const { x, y } of bombCells) {
-    const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-
-    if (!cell) continue;
-	if (cell.querySelector(".bomb-overlay")) continue;
-
-    const overlay = document.createElement("div");
-    overlay.className = "bomb-overlay";
-
-    Object.assign(overlay.style, {
-      position: "absolute",
-      top: "2px",
-      left: "2px",
-      right: "3px",
-      bottom: "3px",
-      background: "rgba(255, 0, 0, 0.25)",
-      pointerEvents: "none",
-      zIndex: "10"
-    });
-
-    cell.style.position = "relative";
-
-    cell.appendChild(overlay);
+  return {
+    position: "absolute",
+    top: "2px",
+    left: "2px",
+    right: "3px",
+    bottom: "3px",
+    background: backgroundColor,
+    pointerEvents: "none",
+    zIndex: "10"
   }
 }
 

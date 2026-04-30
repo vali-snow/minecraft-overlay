@@ -7,7 +7,6 @@ async function sendAction(action) {
   try {
     await chrome.tabs.sendMessage(tab.id, { action });
   } catch (err) {
-    console.warn("Content script not available. Injecting...", err);
     try {
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -16,7 +15,7 @@ async function sendAction(action) {
 
       await chrome.tabs.sendMessage(tab.id, { action });
     } catch (injectErr) {
-      console.error("Could not inject content script:", injectErr);
+      console.error("Could not inject content script:", err, injectErr);
     }
   }
 }
