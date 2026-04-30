@@ -2,8 +2,8 @@
 
 ## Step 1
 
-Go to your extensions page
-chrome:extensions | vivaldi:extensions
+Go to your extensions page:
+*chrome:extensions* | *vivaldi:extensions*
 
 ## Step 2
 
